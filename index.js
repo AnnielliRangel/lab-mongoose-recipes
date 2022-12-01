@@ -1,5 +1,31 @@
-const mongoose = require('mongoose');
+import express from "express";
+import * as dotenv from "dotenv";
+import recipeRoute from "./routes/recipes.routes.js";
+import connect from "./config/db.config.js";
 
+dotenv.config();
+
+const app = express();
+
+app.use(express.json());
+
+connect();
+
+app.get("/one", (req, res)=>{
+  return res.status(200).json({msg:"dentro do get"})
+})
+
+app.use("/recipe", recipeRoute);
+
+app.listen(process.env.PORT, () => {
+  console.log(
+    `App up and running on port http://localhost:${process.env.PORT}`
+  );
+});
+
+/*
+
+const mongoose = require('mongoose');
 // Import of the model Recipe from './models/Recipe.model.js'
 const Recipe = require('./models/Recipe.model');
 // Import of the data from './data.json'
@@ -21,3 +47,5 @@ mongoose
   .catch(error => {
     console.error('Error connecting to the database', error);
   });
+
+  */
