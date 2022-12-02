@@ -21,7 +21,7 @@ userRoute.post("/create-user", async (req, res) => {
 
 userRoute.get("/all-users", async (req, res) => {
   try {
-    const allUsers = await User.find();
+    const allUsers = await User.find().populate("recipes");
     return res.status(200).json(allUsers);
   } catch (error) {
     console.log(error);
@@ -57,7 +57,7 @@ userRoute.delete("/deleteUser/:idUser", async (req, res) => {
     }
 
     const users = await User.find();
-    await Recipe.deleteMany({ user: idUser });
+    await Recipe.deleteMany({ User: idUser });
 
     return res.status(200).json(users);
   } catch (error) {
