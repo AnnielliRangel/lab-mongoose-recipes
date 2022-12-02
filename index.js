@@ -2,6 +2,7 @@ import express from "express";
 import * as dotenv from "dotenv";
 import recipeRoute from "./routes/recipes.routes.js";
 import connect from "./config/db.config.js";
+import userRoute from "./routes/user.routes.js"
 
 dotenv.config();
 
@@ -11,11 +12,10 @@ app.use(express.json());
 
 connect();
 
-app.get("/one", (req, res)=>{
-  return res.status(200).json({msg:"dentro do get"})
-})
+
 
 app.use("/recipe", recipeRoute);
+app.use("/user", userRoute)
 
 app.listen(process.env.PORT, () => {
   console.log(

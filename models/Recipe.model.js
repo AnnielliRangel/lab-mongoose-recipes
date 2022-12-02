@@ -35,7 +35,8 @@ const recipeSchema = new Schema({
   created:{
     type: Date,
     defaut: Date.now
-  }   
+  },
+  User: {type: Schema.Types.ObjectId, ref: "User"},   
 
 },
 {timestamps: true}

@@ -1,11 +1,12 @@
 import express from "express";
 import Recipe from "../models/Recipe.model.js";
+import User from "../models/User.model.js";
 
 const recipeRoute = express.Router();
 
 recipeRoute.get("/all-recipes", async (req, res) => {
   try {
-    const recipes = await Recipe.find({});
+    const recipes = await Recipe.find({}).populate("User");
 
     return res.status(200).json(recipes);
   } catch (error) {
@@ -14,12 +15,31 @@ recipeRoute.get("/all-recipes", async (req, res) => {
   }
 });
 
+recipeRoute.get("/oneRecipe/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const oneRecipe = await Recipe.findById(id).populate("User");
+    return res.status(200).json(oneRecipe)
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error);
+  }
+});
+
 //ITERAÇÃO 2
 
-recipeRoute.post("/create-recipe", async (req, res) => {
+recipeRoute.post("/create-recipe/:idUser", async (req, res) => {
   try {
-    const recipe = req.body;
-    const newRecipe = await Recipe.create(recipe);
+    const { idUser } = req.params;
+
+    const newRecipe = await Recipe.create({ ...req.body, user: idUser });
+
+    const updatedUser = await User.findByIdAndUpdate(
+      idUser,
+      { $push: { recipes: newRecipe._idUser } },
+      { new: true, runValidators: true }
+    );
     return res.status(201).json(newRecipe);
   } catch (error) {
     console.log(error);
@@ -29,11 +49,19 @@ recipeRoute.post("/create-recipe", async (req, res) => {
 
 //ITERAÇÃO 3
 
-recipeRoute.post("/create-manyrecipes", async (req, res) => {
+recipeRoute.post("/create-manyrecipes/:idUser", async (req, res) => {
   try {
-    const manyRecipe = await Recipe.insertMany(req.body);
-    const recipestitle = await Recipe.find({}, { title: 1 });
-    return res.status(201).json(recipestitle);
+    const { idUser } = req.params;
+    const manyRecipe = await Recipe.insertMany({ ...req.body, user: idUser });
+    //const recipestitle = await Recipe.find({}, { title: 1 });
+
+    const updatedUser = await User.findByIdAndUpdate(
+      idUser,
+      { $push: { recipes: manyRecipe._id } },
+      { new: true, runValidators: true }
+    );
+
+    return res.status(201).json(updatedUser);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ msg: "Deu ruim." });
@@ -42,11 +70,11 @@ recipeRoute.post("/create-manyrecipes", async (req, res) => {
 
 //ITERAÇÃO 4
 
-recipeRoute.put("/edit/:title", async (req, res) => {
+recipeRoute.put("/edit/:id", async (req, res) => {
   try {
-    const { title } = req.params;
-    const updatedRecipe = await Recipe.findOneAndUpdate(
-      title,
+    const { id } = req.params;
+    const updatedRecipe = await Recipe.findByIdAndUpdate(
+      id,
       { ...req.body },
       { new: true, runValidators: true }
     );
@@ -59,14 +87,20 @@ recipeRoute.put("/edit/:title", async (req, res) => {
 
 //ITERAÇÃO 5
 
-recipeRoute.delete("/delete/:title", async (req, res) => {
+recipeRoute.delete("/delete/:id", async (req, res) => {
   try {
-    const { title } = req.params;
-    const deletedRecipe = await Recipe.deleteOne(title);
+    const { id } = req.params;
+    const deletedRecipe = await Recipe.findByIdAndDelete(id);
 
     if (!deletedRecipe) {
       return res.status(400).json({ msg: "recipe not find" });
     }
+
+    await User.findByIdAndDelete(
+      deletedRecipe.user,
+      { $pull: { recipes: id } },
+      { new: true, runValidators: true }
+    );
 
     return res.status(200).json({ msg: "Recipe deleted" });
   } catch (error) {
